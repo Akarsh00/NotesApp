@@ -1,10 +1,12 @@
 package com.aki.notesapp.presentation.notesscreen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,63 +32,60 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aki.notesapp.db.NoteDatabaseProvider
 import com.aki.notesapp.presentation.EmptyNoteViews
 import com.aki.notesapp.presentation.addnote.model.Note
 import com.aki.notesapp.presentation.addnote.model.NoteItemType
 import com.aki.notesapp.presentation.addnote.model.getItemList
+import com.aki.notesapp.presentation.notesscreen.model.NotesScreenAction
 import com.aki.notesapp.ui.theme.SoftRed
 
 @Composable
-fun ShowNotesRoot(actionMoveToAddNoteScreen: () -> Unit) {
+fun ShowNotesRoot(modifier: Modifier = Modifier, openAddNoteScreen: (Long?) -> Unit) {
 
-    val viewModel: ShowTaskScreenViewModel =
-        viewModel(
-            factory = ShowNotesScreenViewModelFactory(
-                NoteDatabaseProvider.getDatabase(LocalContext.current).notesDao()
-            )
+    val viewModel: ShowTaskScreenViewModel = viewModel(
+        factory = ShowNotesScreenViewModelFactory(
+            NoteDatabaseProvider.getDatabase(LocalContext.current).notesDao()
         )
-    val notesItem by viewModel.addTaskItemList.collectAsState(listOf())
+    )
+    val notesItem by viewModel.taskList.collectAsState(listOf())
 
-
-    Scaffold(topBar = {
-    }, bottomBar = {
-
-    }, floatingActionButton = {
+    Scaffold(floatingActionButton = {
         FloatingActionButton({
-            actionMoveToAddNoteScreen.invoke()
-        }
-        ) {
+            openAddNoteScreen.invoke(null)
+        }) {
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = "Add",
             )
         }
     }) { innerPadding ->
-        Box(
-            modifier = Modifier
+        ShowTasks(
+            modifier = modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            ShowTasks(
-                modifier = Modifier
-                    .fillMaxSize(),
-                listOfNote = notesItem
-            )
-        }
-
+                .padding(innerPadding),
+            listOfNote = notesItem,
+            onAction = viewModel::onAction,
+            openAddNoteScreen = { openAddNoteScreen.invoke(it) })
     }
 
 }
 
 
 @Composable
-fun HeaderNote(modifier: Modifier = Modifier, note: Note) {
+fun HeaderNote(
+    modifier: Modifier = Modifier,
+    note: Note,
+    onAction: (NotesScreenAction) -> Unit,
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -104,17 +103,41 @@ fun HeaderNote(modifier: Modifier = Modifier, note: Note) {
         VerticalDivider(
             color = SoftRed
         )
+        Spacer(modifier = Modifier.weight(1f))
+        Text(
+            text = if (note.expanded) {
+                "Collapse"
+            } else {
+                "Read All"
+            },
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 12.sp,
+            color = Color(0xFF0075FF),
+            modifier = Modifier
+                .padding(8.dp)
+                .clickable {
+                    onAction(NotesScreenAction.NotesScreenExpandCollapseClicked(noteId = note.id))
+                }
+                .align(alignment = Alignment.CenterVertically))
     }
 }
 
 @Composable
-fun NoteContent(modifier: Modifier = Modifier, note: Note) {
-    note?.lisOfNoteItem?.forEach { noteContent ->
+fun NoteContent(
+    modifier: Modifier = Modifier,
+    note: Note,
+    onAction: (NotesScreenAction) -> Unit,
+    openAddNoteScreen: (Long?) -> Unit
+) {
+    note.listOfNoteItem?.forEach { noteContent ->
         Row(
             modifier = modifier
                 .fillMaxWidth()
                 .heightIn(min = 50.dp, max = 500.dp)
-                .height(IntrinsicSize.Max),
+                .height(IntrinsicSize.Max)
+                .clickable(onClick = {
+                    openAddNoteScreen.invoke(note.id)
+                }),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
 
@@ -126,7 +149,15 @@ fun NoteContent(modifier: Modifier = Modifier, note: Note) {
                 VerticalDivider(
                     color = SoftRed
                 )
-                Text(noteContent.noteText)
+                Text(
+                    noteContent.noteText,
+                    maxLines = if (note.expanded) {
+                        Int.MAX_VALUE
+                    } else {
+                        1
+                    },
+                    overflow = TextOverflow.Ellipsis,
+                )
 
             } else if (noteContent.type == NoteItemType.DATE) {
                 Box(modifier = Modifier.widthIn(70.dp), contentAlignment = Alignment.Center) {
@@ -145,18 +176,26 @@ fun NoteContent(modifier: Modifier = Modifier, note: Note) {
 }
 
 @Composable
-fun ShowTasks(modifier: Modifier = Modifier, listOfNote: List<Note>) {
-    LazyColumn {
-            items(listOfNote.reversed()) { note ->
-                HeaderNote(note = note)
-                HorizontalDivider(color = Color(0xFFCAD1EB))
-                NoteContent(note = note)
-                HorizontalDivider(color = Color(0xFFCAD1EB))
-            }
-            items(5){
-                EmptyNoteViews()
-            }
+fun ShowTasks(
+    modifier: Modifier = Modifier,
+    listOfNote: List<Note>,
+    onAction: (NotesScreenAction) -> Unit,
+    openAddNoteScreen: (Long?) -> Unit
 
+) {
+    LazyColumn(modifier = modifier) {
+        items(listOfNote.reversed()) { note ->
+            HeaderNote(note = note, onAction = onAction)
+            HorizontalDivider(color = Color(0xFFCAD1EB))
+            NoteContent(
+                note = note,
+                onAction = onAction,
+                openAddNoteScreen = { openAddNoteScreen.invoke(it) })
+            HorizontalDivider(color = Color(0xFFCAD1EB))
+        }
+        items(5) {
+            EmptyNoteViews()
+        }
     }
 }
 
@@ -167,10 +206,9 @@ fun ShowTasks(modifier: Modifier = Modifier, listOfNote: List<Note>) {
 fun ShowNotesPreview() {
     var listOfNotes = listOf(Note(0, getItemList()), Note(1, getItemList()), Note(2, getItemList()))
     Scaffold(modifier = Modifier) { paddingValues ->
-        ShowTasks(
-            modifier = Modifier.padding(paddingValues),
-            listOfNote = listOfNotes
-        )
+        ShowTasks(modifier = Modifier.padding(paddingValues), listOfNote = listOfNotes, onAction = {
+
+        }, openAddNoteScreen = {})
 
     }
 }

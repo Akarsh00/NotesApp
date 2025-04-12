@@ -28,33 +28,27 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
@@ -69,12 +63,14 @@ import com.aki.notesapp.presentation.addnote.model.AddNotesScreenAction
 import com.aki.notesapp.presentation.addnote.model.AddNotesState
 import com.aki.notesapp.presentation.addnote.model.Note
 import com.aki.notesapp.presentation.addnote.model.createNoteItemList
+import com.aki.notesapp.presentation.addnote.more.AddMoreOptionBottomSheet
+import com.aki.notesapp.presentation.addnote.more.model.AddMoreAction
 import com.aki.notesapp.ui.theme.LightGrayBlue
 import com.aki.notesapp.ui.theme.SoftRed
 
 @Composable
 fun AddNoteRoot(
-    modifier: Modifier = Modifier, taskId: Int? = null, onBackPressed: () -> Unit
+    modifier: Modifier = Modifier, taskId: Long? = null, onBackPressed: () -> Unit
 ) {
     val viewModel: AddNoteViewModel = viewModel(
         factory = AddNoteViewModelFactory(
@@ -82,54 +78,56 @@ fun AddNoteRoot(
         )
     )
     LaunchedEffect(taskId) {
-        taskId?.let { viewModel.loadTaskById(it) }
+        taskId?.let { viewModel.loadTaskById(taskId) }
     }
+
+
     val addNoteState by remember {
         viewModel.addNoteItemList
     }
 
 
     AddNoteFullScreen(
-        addNoteState,
-        onAction = viewModel::onAction,
-        onBackPressed = onBackPressed
+        addNoteState, onAction = viewModel::onAction, onBackPressed = onBackPressed
     )
 
 }
 
 @Composable
 private fun AddNoteFullScreen(
-    addNoteState: AddNotesState,
-    onAction: (AddNotesScreenAction) -> Unit,
-    onBackPressed: () -> Unit
+    addNoteState: AddNotesState, onAction: (AddNotesScreenAction) -> Unit, onBackPressed: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(addNoteState.snackBarText) {
         if (addNoteState.snackBarText.isNotEmpty()) {
             onBackPressed.invoke()
             snackbarHostState.showSnackbar(addNoteState.snackBarText)
         }
     }
-    Scaffold(
-        topBar = {
-            HeaderToolbar(
-                title = "Add Task",
-                arrowBack = Icons.Filled.ArrowBack,
-                onBackPressed = onBackPressed
-            )
-        },
-        bottomBar = {
-            BottomBar(onAction = onAction)
 
-        },
-        floatingActionButton = {
-            AddMoreFABOption(onAction = onAction)
-        },
-        snackbarHost = {
-            SnackbarHost(snackbarHostState)
+    if (addNoteState.showBottomSheet) {
+        AddMoreOptionBottomSheet(addNoteState, onSave = {
+            onAction(AddNotesScreenAction.OnAddHashTags(it))
 
-        }) { innerPadding ->
+        }, onDismiss = {
+            onAction(AddNotesScreenAction.OnBottomSheetCloseAction)
+        })
+    }
+    Scaffold(topBar = {
+        HeaderToolbar(
+            title = "Add Task",
+            arrowBack = Icons.Filled.ArrowBack,
+            onBackPressed = onBackPressed
+        )
+    }, bottomBar = {
+        BottomBar(onAction = onAction)
+
+    }, floatingActionButton = {
+        AddMoreFABOption(onAction = onAction)
+    }, snackbarHost = {
+        SnackbarHost(snackbarHostState)
+
+    }) { innerPadding ->
         AddNoteLazyColumn(notesItem = addNoteState.note, innerPadding, onAction = onAction)
     }
 }
@@ -169,7 +167,7 @@ private fun AddNoteLazyColumn(
         item {
             AddNoteHeader(modifier = Modifier.heightIn(min = 50.dp, max = 500.dp))
         }
-        items(notesItem.lisOfNoteItem) { noteRow ->
+        items(notesItem.listOfNoteItem) { noteRow ->
             AddNote(
                 noteRow, modifier = Modifier.heightIn(50.dp, max = 500.dp)
             ) { action ->
@@ -250,7 +248,8 @@ fun AddNoteHeader(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .widthIn(70.dp)
                 .padding(4.dp)
-                .align(Alignment.CenterVertically)
+                .align(Alignment.CenterVertically),
+            textAlign = TextAlign.Center
         )
         VerticalDivider(
             color = SoftRed
@@ -274,55 +273,63 @@ fun AddNote(
     ) {
 
 
-        if (newNote.type == NoteItemType.EMPTY) {
-            Box(modifier = Modifier.widthIn(70.dp))
-            VerticalDivider(
-                color = SoftRed
-            )
-
-        } else if (newNote.type == NoteItemType.TITLE || newNote.type == NoteItemType.COMMENT) {
-
-            Box(modifier = Modifier.widthIn(70.dp), contentAlignment = Alignment.Center) {
-                Icon(imageVector = Icons.Default.AccountBox, contentDescription = null)
-            }
-            VerticalDivider(
-                color = SoftRed
-            )
-            Box(
-                modifier = Modifier, contentAlignment = Alignment.CenterStart
-            ) {
-                BasicTextField(
-                    value = newNote.noteText,
-                    onValueChange = { newText ->
-                        onAction(
-                            AddNotesScreenAction.OnNotesTextChange(
-                                newNote, newText
-                            )
-                        )
-                    },
-                    textStyle = TextStyle(fontSize = 18.sp, color = Color(0XFF556777)),
-                    modifier = Modifier
-                        .padding(vertical = 8.dp)
-                        .fillMaxWidth()
-                        .background(Color.Transparent),
+        when (newNote.type) {
+            NoteItemType.EMPTY -> {
+                Box(modifier = Modifier.widthIn(70.dp))
+                VerticalDivider(
+                    color = SoftRed
                 )
 
-                if (newNote.noteText.isEmpty()) {
-                    Text(
-                        text = newNote.hint, fontSize = 16.sp, color = Color(0XFF889AAA)
-                    )
+            }
+
+            NoteItemType.TITLE, NoteItemType.COMMENT -> {
+
+                Box(modifier = Modifier.widthIn(70.dp), contentAlignment = Alignment.Center) {
+                    Icon(imageVector = Icons.Default.AccountBox, contentDescription = null)
                 }
+                VerticalDivider(
+                    color = SoftRed
+                )
+                Box(
+                    modifier = Modifier, contentAlignment = Alignment.CenterStart
+                ) {
+                    BasicTextField(
+                        value = newNote.noteText,
+                        onValueChange = { newText ->
+                            onAction(
+                                AddNotesScreenAction.OnNotesTextChange(
+                                    newNote, newText
+                                )
+                            )
+                        },
+                        textStyle = TextStyle(fontSize = 18.sp, color = Color(0XFF556777)),
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                            .fillMaxWidth()
+                            .background(Color.Transparent),
+                    )
+
+                    if (newNote.noteText.isEmpty()) {
+                        Text(
+                            text = newNote.hint, fontSize = 16.sp, color = Color(0XFF889AAA)
+                        )
+                    }
+                }
+
             }
 
-        } else if (newNote.type == NoteItemType.DATE) {
-            Box(modifier = Modifier.widthIn(70.dp), contentAlignment = Alignment.Center) {
-                Icon(imageVector = Icons.Default.DateRange, contentDescription = null)
+            NoteItemType.DATE -> {
+                Box(modifier = Modifier.widthIn(70.dp), contentAlignment = Alignment.Center) {
+                    Icon(imageVector = Icons.Default.DateRange, contentDescription = null)
+
+                }
+                VerticalDivider(
+                    color = SoftRed
+                )
 
             }
-            VerticalDivider(
-                color = SoftRed
-            )
 
+            NoteItemType.HASHTAG -> {}
         }
     }
     HorizontalDivider(color = LightGrayBlue)
@@ -337,7 +344,7 @@ fun AddNotePreview() {
 
     AddNoteFullScreen(
         AddNotesState(
-            note = Note(lisOfNoteItem = createNoteItemList()),
+            note = Note(listOfNoteItem = createNoteItemList()),
             isLoading = false,
             isNewNoteAdded = false,
         ), onAction = {}) {

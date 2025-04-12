@@ -22,5 +22,5 @@ interface NotesDao {
     fun getAll(): Flow<List<Note>>
 
     @Query("select * from note where id =:notesId")
-    suspend fun getTaskWithId(notesId: Int): Note
+    suspend fun getTaskWithId(notesId: Long): Note
 }

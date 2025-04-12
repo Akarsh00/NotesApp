@@ -18,7 +18,9 @@ class FakeNoteDao : NotesDao {
         return flowOf(listOf(Note(1, createNoteItemList())))
     }
 
-    override suspend fun getTaskWithId(notesId: Int): Note {
-        TODO("Not yet implemented")
+    override suspend fun getTaskWithId(notesId: Long): Note {
+        return Note(listOfNoteItem = mutableListOf())
     }
+
+
 }
