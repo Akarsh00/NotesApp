@@ -66,13 +66,14 @@ fun getItemList(): MutableList<NoteItem> {
             isEditable = false,
             type = NoteItemType.COMMENT
         ),
+
         NoteItem(
             noteText = "",
-            hint = "Add Date",
+            hint = "",
             isEditable = false,
-            type = NoteItemType.DATE
+            type = NoteItemType.HASHTAG,
+            hashTags = listOf("workout","game","new workout")
         )
-
     )
     return listItems
 
