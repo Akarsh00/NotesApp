@@ -2,8 +2,10 @@ package com.aki.notesapp.presentation.addnote
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -16,14 +18,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -46,16 +49,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aki.notesapp.presentation.addnote.model.NoteItem
 import com.aki.notesapp.presentation.addnote.model.NoteItemType
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.aki.notesapp.common.getIconFromNoteType
 import com.aki.notesapp.db.NoteDatabaseProvider
 import com.aki.notesapp.presentation.EmptyNoteViews
 import com.aki.notesapp.presentation.HeaderToolbar
@@ -64,7 +71,6 @@ import com.aki.notesapp.presentation.addnote.model.AddNotesState
 import com.aki.notesapp.presentation.addnote.model.Note
 import com.aki.notesapp.presentation.addnote.model.createNoteItemList
 import com.aki.notesapp.presentation.addnote.more.AddMoreOptionBottomSheet
-import com.aki.notesapp.presentation.addnote.more.model.AddMoreAction
 import com.aki.notesapp.ui.theme.LightGrayBlue
 import com.aki.notesapp.ui.theme.SoftRed
 
@@ -82,9 +88,7 @@ fun AddNoteRoot(
     }
 
 
-    val addNoteState by remember {
-        viewModel.addNoteItemList
-    }
+    val addNoteState by viewModel.addNoteItemList.collectAsStateWithLifecycle()
 
 
     AddNoteFullScreen(
@@ -272,24 +276,64 @@ fun AddNote(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
 
+        Box(
+            modifier = Modifier.widthIn(min = 70.dp, max = 70.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            val icon = getIconFromNoteType(newNote.type)
+            icon?.let {
+                Icon(
+                    modifier = Modifier.size(24.dp),
+                    painter = painterResource(it),
+                    contentDescription = null
+                )
+            }
+
+        }
+
+        VerticalDivider(
+            color = SoftRed
+        )
 
         when (newNote.type) {
-            NoteItemType.EMPTY -> {
-                Box(modifier = Modifier.widthIn(70.dp))
-                VerticalDivider(
-                    color = SoftRed
-                )
+            NoteItemType.EMPTY -> {}
+            NoteItemType.DATE -> {}
+            NoteItemType.HASHTAG -> {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    newNote.hashTags.forEach {
+                        AssistChip(
+                            modifier = Modifier
+                                .padding(4.dp),
+                            border = AssistChipDefaults.assistChipBorder(
+                                enabled = true,
+                                borderColor = Color(0XFF889AAA),
+                                disabledBorderColor = Color(0XFF889AAA),
+                                borderWidth = 1.dp
+                            ),
+                            colors = AssistChipDefaults.assistChipColors(
+                                labelColor = Color(
+                                    0XFF889AAA
+                                )
+                            ),
+                            onClick = { },
+                            label = {
+                                Text(text = it)
+                            })
+                    }
+
+
+                }
+
 
             }
 
             NoteItemType.TITLE, NoteItemType.COMMENT -> {
 
-                Box(modifier = Modifier.widthIn(70.dp), contentAlignment = Alignment.Center) {
-                    Icon(imageVector = Icons.Default.AccountBox, contentDescription = null)
-                }
-                VerticalDivider(
-                    color = SoftRed
-                )
                 Box(
                     modifier = Modifier, contentAlignment = Alignment.CenterStart
                 ) {
@@ -315,21 +359,7 @@ fun AddNote(
                         )
                     }
                 }
-
             }
-
-            NoteItemType.DATE -> {
-                Box(modifier = Modifier.widthIn(70.dp), contentAlignment = Alignment.Center) {
-                    Icon(imageVector = Icons.Default.DateRange, contentDescription = null)
-
-                }
-                VerticalDivider(
-                    color = SoftRed
-                )
-
-            }
-
-            NoteItemType.HASHTAG -> {}
         }
     }
     HorizontalDivider(color = LightGrayBlue)

@@ -13,15 +13,18 @@ import com.aki.notesapp.presentation.addnote.model.Note
 import com.aki.notesapp.presentation.addnote.model.NoteItemType
 import com.aki.notesapp.presentation.addnote.model.createNoteItemList
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class AddNoteViewModel(private val noteDao: NotesDao) : ViewModel() {
 
 
-    private val _addNoteItemList = mutableStateOf(
+    private val _addNoteItemList = MutableStateFlow(
         AddNotesState(note = Note(listOfNoteItem = createNoteItemList()))
     )
-    val addNoteItemList: State<AddNotesState> = _addNoteItemList
+    val addNoteItemList = _addNoteItemList.asStateFlow()
 
     fun loadTaskById(id: Long) {
         viewModelScope.launch {
@@ -84,12 +87,13 @@ class AddNoteViewModel(private val noteDao: NotesDao) : ViewModel() {
             }
 
             is AddNotesScreenAction.OnAddHashTags -> {
-                val noteContent = _addNoteItemList.value.note
-                val mutableList: MutableList<NoteItem> = noteContent.listOfNoteItem.toMutableList()
-                mutableList.add(NoteItem(hashTags = action.hashTags, type = NoteItemType.HASHTAG))
-                _addNoteItemList.value.note.listOfNoteItem = mutableList
+                val currentNote = _addNoteItemList.value.note
+                val updatedList = currentNote.listOfNoteItem.toMutableList().apply {
+                    add(NoteItem(hashTags = action.hashTags, type = NoteItemType.HASHTAG))
+                }
+
                 updateState(
-                    note = _addNoteItemList.value.note,
+                    note = currentNote.copy(listOfNoteItem = updatedList),
                     openBottomSheet = false
                 )
             }
@@ -104,14 +108,10 @@ class AddNoteViewModel(private val noteDao: NotesDao) : ViewModel() {
         isFabIconVisible: Boolean = _addNoteItemList.value.isFabIconVisible,
         openBottomSheet: Boolean = false
     ) {
-        _addNoteItemList.value = AddNotesState(
-            note = note,
-            snackBarText = snackBarText,
-            isLoading = isLoading,
-            isNewNoteAdded = isNewNoteAdded,
-            isFabIconVisible = isFabIconVisible,
-            showBottomSheet = openBottomSheet,
-        )
+        _addNoteItemList.update {
+            it.copy(note = note, snackBarText = snackBarText, isLoading = isLoading, isNewNoteAdded = isNewNoteAdded, isFabIconVisible = isFabIconVisible, showBottomSheet = openBottomSheet) // or update notes, hashtags etc.
+        }
+
     }
 }
 

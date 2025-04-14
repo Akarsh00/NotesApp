@@ -33,7 +33,7 @@ enum class NoteItemType {
 }
 
 fun createNoteItemList(): MutableList<NoteItem> {
-    val listItems = mutableListOf<NoteItem>(
+    val listItems = mutableListOf(
         NoteItem(
             noteText = "",
             hint = "Enter task ame",
@@ -45,12 +45,6 @@ fun createNoteItemList(): MutableList<NoteItem> {
             hint = "Enter Detail description",
             isEditable = false,
             type = NoteItemType.COMMENT
-        ),
-        NoteItem(
-            noteText = "",
-            hint = "Add Date",
-            isEditable = false,
-            type = NoteItemType.DATE
         )
 
     )
