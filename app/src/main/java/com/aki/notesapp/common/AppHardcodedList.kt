@@ -1,36 +1,10 @@
-package com.aki.notesapp.presentation.addnote.model
+package com.aki.notesapp.common
 
-import androidx.room.Entity
-import androidx.room.Ignore
-import androidx.room.PrimaryKey
+import com.aki.notesapp.db.model.NoteItem
+import com.aki.notesapp.db.model.NoteItemType
+import com.aki.notesapp.presentation.addnote_popup.popupnote.state.OtherOptionState
 import kotlin.random.Random
 
-@Entity
-data class Note(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0L,
-    var listOfNoteItem: List<NoteItem>,
-    val isTaskCompleted: Boolean = false,
-    var expanded: Boolean = false
-
-)
-
-data class NoteItem(
-    var noteText: String = "",
-    var hint: String = "",
-    var hashTags: List<String> = listOf(),
-    val isEditable: Boolean = false,
-    val type: NoteItemType = NoteItemType.EMPTY
-)
-
-
-enum class NoteItemType {
-    EMPTY,
-    DATE,
-    COMMENT,
-    HASHTAG,
-    TITLE,
-}
 
 fun createNoteItemList(): MutableList<NoteItem> {
     val listItems = mutableListOf(
@@ -44,7 +18,7 @@ fun createNoteItemList(): MutableList<NoteItem> {
             noteText = "",
             hint = "Enter Detail description",
             isEditable = false,
-            type = NoteItemType.COMMENT
+            type = NoteItemType.DESCRIPTION
         )
 
     )
@@ -52,7 +26,18 @@ fun createNoteItemList(): MutableList<NoteItem> {
 
 }
 
-fun getItemList(): MutableList<NoteItem> {
+
+fun listOfPopupAddNotesAction(): List<OtherOptionState> =
+    listOf(
+        OtherOptionState(NoteItemType.HASHTAG, false),
+        OtherOptionState(NoteItemType.ATTACHMENT, false),
+        OtherOptionState(NoteItemType.COMMENT, false),
+        OtherOptionState(NoteItemType.HASHTAG, false),
+        OtherOptionState(NoteItemType.ATTACHMENT, false),
+        OtherOptionState(NoteItemType.COMMENT, false),
+    )
+
+fun getItemListPreview(): MutableList<NoteItem> {
     val listItems = mutableListOf(
         NoteItem(
             noteText = "${Random.nextInt(200)} This is task name",
@@ -64,7 +49,7 @@ fun getItemList(): MutableList<NoteItem> {
             noteText = "Item ${Random.nextInt(200)} This is the detailed description of this task",
             hint = "",
             isEditable = false,
-            type = NoteItemType.COMMENT
+            type = NoteItemType.DESCRIPTION
         ),
 
         NoteItem(
@@ -72,7 +57,7 @@ fun getItemList(): MutableList<NoteItem> {
             hint = "",
             isEditable = false,
             type = NoteItemType.HASHTAG,
-            hashTags = listOf("workout","game","new workout")
+            hashTags = listOf("workout", "game", "new workout")
         )
     )
     return listItems

@@ -1,5 +1,6 @@
-package com.aki.notesapp.presentation
+package com.aki.notesapp.common
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -7,7 +8,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -20,10 +25,57 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
+
+@Composable
+fun AssistChipNoteItem(modifier: Modifier = Modifier, text: String) {
+    AssistChip(
+        modifier = modifier
+            .padding(4.dp),
+        border = AssistChipDefaults.assistChipBorder(
+            enabled = true,
+            borderColor = Color(0XFF889AAA),
+            disabledBorderColor = Color(0XFF889AAA),
+            borderWidth = 1.dp
+        ),
+        colors = AssistChipDefaults.assistChipColors(
+            labelColor = Color(
+                0XFF889AAA
+            )
+        ),
+        onClick = { },
+        label = {
+            Text(text = text)
+        })
+}
+
+@Composable
+fun NotesAttachmentImage(modifier: Modifier = Modifier, path: String) {
+    Image(
+        painter = rememberAsyncImagePainter(path),
+        contentDescription = null,
+        modifier = modifier
+            .size(50.dp)
+            .clip(RoundedCornerShape(16.dp))
+    )
+}
+
+@Composable
+fun NotesItemIconImage(modifier: Modifier = Modifier, icon: Int) {
+    Icon(
+        modifier = modifier.size(24.dp),
+        painter = painterResource(icon),
+        contentDescription = null
+    )
+}
+
+
 
 @Composable
 fun EmptyNoteViews(modifier: Modifier = Modifier) {
@@ -70,4 +122,26 @@ fun HeaderToolbar(
         scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
         modifier = Modifier.shadow(elevation = 4.dp)
     )
+}
+
+@Composable
+fun AssistChipNoteItem(text: String) {
+    AssistChip(
+        modifier = Modifier
+            .padding(4.dp),
+        border = AssistChipDefaults.assistChipBorder(
+            enabled = true,
+            borderColor = Color(0XFF889AAA),
+            disabledBorderColor = Color(0XFF889AAA),
+            borderWidth = 1.dp
+        ),
+        colors = AssistChipDefaults.assistChipColors(
+            labelColor = Color(
+                0XFF889AAA
+            )
+        ),
+        onClick = { },
+        label = {
+            Text(text = text)
+        })
 }

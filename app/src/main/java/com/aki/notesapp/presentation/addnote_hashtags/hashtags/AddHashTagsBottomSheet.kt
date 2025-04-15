@@ -1,25 +1,17 @@
-package com.aki.notesapp.presentation.addnote.more
+package com.aki.notesapp.presentation.addnote_hashtags.hashtags
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,7 +23,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,9 +34,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.aki.notesapp.presentation.addnote.model.AddNotesState
-import com.aki.notesapp.presentation.addnote.more.model.AddMoreAction
-import com.aki.notesapp.presentation.addnote.more.model.AddMoreState
+import com.aki.notesapp.presentation.addnote.state.AddNotesState
+import com.aki.notesapp.presentation.addnote_hashtags.hashtags.action.HashTagScreenAction
+import com.aki.notesapp.presentation.addnote_hashtags.hashtags.state.HashTagsModel
 
 @Composable
 fun AddMoreOptionBottomSheet(
@@ -53,7 +44,7 @@ fun AddMoreOptionBottomSheet(
     onDismiss: () -> Unit,
     onSave: (List<String>) -> Unit
 ) {
-    val viewModel: AddMoreOptionViewModel = viewModel()
+    val viewModel: AddHashTagsViewModel = viewModel()
     val hashtagsState by viewModel.addHashTagState.collectAsStateWithLifecycle()
     val showSheet = remember { state.showBottomSheet }
     MoreOptionBottomSheet(
@@ -67,15 +58,15 @@ fun AddMoreOptionBottomSheet(
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MoreOptionBottomSheet(
     modifier: Modifier = Modifier,
     showSheet: Boolean,
-    addMoreState: AddMoreState,
+    addMoreState: HashTagsModel,
     onDismiss: () -> Unit,
     onSave: (String) -> Unit,
-    onAction: (AddMoreAction) -> Unit,
+    onAction: (HashTagScreenAction) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState()
 
@@ -98,7 +89,7 @@ fun MoreOptionBottomSheet(
                 Text("Write comma separated hashtags ")
                 TextField(
                     value = "" + addMoreState.hashTagText,
-                    onValueChange = { newValue -> onAction(AddMoreAction.OnTextChange(newValue)) })
+                    onValueChange = { newValue -> onAction(HashTagScreenAction.OnTextChange(newValue)) })
 
 
                 Row(
@@ -133,7 +124,7 @@ fun MoreOptionBottomSheet(
 
 @Composable
 private fun BottomSheetBottomBar(
-    addMoreState: AddMoreState,
+    addMoreState: HashTagsModel,
     onDismiss: () -> Unit,
     onSave: (List<String>) -> Unit,
 
@@ -186,7 +177,7 @@ private fun BottomSheetBottomBar(
 @Composable
 fun AddMoreOptionBottomSheetPreview() {
     MoreOptionBottomSheet(
-        showSheet = true, addMoreState = AddMoreState(),
+        showSheet = true, addMoreState = HashTagsModel(),
 
         onSave = {}, onDismiss = {}) {
 

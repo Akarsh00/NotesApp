@@ -1,17 +1,15 @@
 package com.aki.notesapp.presentation.addnote
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.aki.notesapp.common.createNoteItemList
 import com.aki.notesapp.db.dao.NotesDao
-import com.aki.notesapp.presentation.addnote.model.AddNotesScreenAction
-import com.aki.notesapp.presentation.addnote.model.AddNotesState
-import com.aki.notesapp.presentation.addnote.model.NoteItem
-import com.aki.notesapp.presentation.addnote.model.Note
-import com.aki.notesapp.presentation.addnote.model.NoteItemType
-import com.aki.notesapp.presentation.addnote.model.createNoteItemList
+import com.aki.notesapp.presentation.addnote.action.AddNotesScreenAction
+import com.aki.notesapp.presentation.addnote.state.AddNotesState
+import com.aki.notesapp.db.model.NoteItem
+import com.aki.notesapp.db.model.Note
+import com.aki.notesapp.db.model.NoteItemType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,9 +24,9 @@ class AddNoteViewModel(private val noteDao: NotesDao) : ViewModel() {
     )
     val addNoteItemList = _addNoteItemList.asStateFlow()
 
-    fun loadTaskById(id: Long) {
+    fun loadNoteById(id: Long) {
         viewModelScope.launch {
-            val note = noteDao.getTaskWithId(id)
+            val note = noteDao.getNoteWithId(id)
             updateState(note)
         }
     }
@@ -47,11 +45,11 @@ class AddNoteViewModel(private val noteDao: NotesDao) : ViewModel() {
         when (action) {
 
             AddNotesScreenAction.OnFabClicked -> {
-                updateState(
-                    note = addNoteItemList.value.note,
-                    isFabIconVisible = true,
-                    openBottomSheet = true
-                )
+//                updateState(
+//                    note = addNoteItemList.value.note,
+//                    isFabIconVisible = false,
+//                    openBottomSheet = true
+//                )
             }
 
             is AddNotesScreenAction.OnNotesTextChange -> {
@@ -60,7 +58,7 @@ class AddNoteViewModel(private val noteDao: NotesDao) : ViewModel() {
 
             AddNotesScreenAction.OnSaveNoteAction -> {
                 val listToSave =
-                    addNoteItemList.value.note.listOfNoteItem.filter { it.noteText.isNotEmpty() || it.hashTags.isNotEmpty() }
+                    addNoteItemList.value.note.listOfNoteItem.filter { it.noteText.isNotEmpty() || it.hashTags.isNotEmpty() || it.noteAttachments.isNotEmpty() }
 
                 updateState(
                     note = Note(
@@ -97,6 +95,27 @@ class AddNoteViewModel(private val noteDao: NotesDao) : ViewModel() {
                     openBottomSheet = false
                 )
             }
+
+            is AddNotesScreenAction.OnAddPopupActions -> {
+                updateState(
+                    openBottomSheet = true
+                )
+            }
+
+            is AddNotesScreenAction.OnAddAttachments -> {
+                action.attachemts
+                val currentNote = _addNoteItemList.value.note
+                val updatedList = currentNote.listOfNoteItem.toMutableList().apply {
+                    add(
+                        NoteItem(
+                            noteAttachments = action.attachemts,
+                            type = NoteItemType.ATTACHMENT
+                        )
+                    )
+                }
+
+                updateState(note = currentNote.copy(listOfNoteItem = updatedList))
+            }
         }
     }
 
@@ -106,10 +125,19 @@ class AddNoteViewModel(private val noteDao: NotesDao) : ViewModel() {
         isLoading: Boolean = false,
         isNewNoteAdded: Boolean = false,
         isFabIconVisible: Boolean = _addNoteItemList.value.isFabIconVisible,
-        openBottomSheet: Boolean = false
+        openBottomSheet: Boolean = false,
+        showPopup: Boolean = false,
     ) {
         _addNoteItemList.update {
-            it.copy(note = note, snackBarText = snackBarText, isLoading = isLoading, isNewNoteAdded = isNewNoteAdded, isFabIconVisible = isFabIconVisible, showBottomSheet = openBottomSheet) // or update notes, hashtags etc.
+            it.copy(
+                note = note,
+                snackBarText = snackBarText,
+                isLoading = isLoading,
+                isNewNoteAdded = isNewNoteAdded,
+                isFabIconVisible = isFabIconVisible,
+                showBottomSheet = openBottomSheet,
+                showPopup = showPopup
+            )
         }
 
     }

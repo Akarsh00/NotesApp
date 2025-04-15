@@ -6,4 +6,7 @@ import kotlinx.serialization.Serializable
 data class AddNoteScreenNav(val id: Long?)
 
 @Serializable
-object NoteScreenNav
+object NoteListScreenNav
+
+@Serializable
+object  AddAttachmentScreenNav

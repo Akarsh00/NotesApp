@@ -5,8 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.aki.notesapp.presentation.addnote.model.Note
-import com.aki.notesapp.presentation.addnote.model.NoteItem
+import com.aki.notesapp.db.model.Note
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -22,5 +21,5 @@ interface NotesDao {
     fun getAll(): Flow<List<Note>>
 
     @Query("select * from note where id =:notesId")
-    suspend fun getTaskWithId(notesId: Long): Note
+    suspend fun getNoteWithId(notesId: Long): Note
 }

@@ -1,4 +1,4 @@
-package com.aki.notesapp.presentation.notesscreen
+package com.aki.notesapp.presentation.shownotes
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,18 +14,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -39,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -47,26 +40,30 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.fastForEachIndexed
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.aki.notesapp.common.AssistChipNoteItem
+import com.aki.notesapp.common.EmptyNoteViews
+import com.aki.notesapp.common.NotesAttachmentImage
+import com.aki.notesapp.common.NotesItemIconImage
 import com.aki.notesapp.common.getIconFromNoteType
+import com.aki.notesapp.common.getItemListPreview
 import com.aki.notesapp.db.NoteDatabaseProvider
-import com.aki.notesapp.presentation.EmptyNoteViews
-import com.aki.notesapp.presentation.addnote.model.Note
-import com.aki.notesapp.presentation.addnote.model.NoteItemType
-import com.aki.notesapp.presentation.addnote.model.getItemList
-import com.aki.notesapp.presentation.notesscreen.model.NotesScreenAction
+import com.aki.notesapp.db.model.Note
+import com.aki.notesapp.db.model.NoteItemType
+import com.aki.notesapp.presentation.shownotes.action.NotesScreenAction
 import com.aki.notesapp.ui.theme.LightGrayBlue
 import com.aki.notesapp.ui.theme.SoftRed
 
 @Composable
-fun ShowNotesRoot(modifier: Modifier = Modifier, openAddNoteScreen: (Long?) -> Unit) {
+fun ShowNotesListScreen(modifier: Modifier = Modifier, openAddNoteScreen: (Long?) -> Unit) {
 
-    val viewModel: ShowTaskScreenViewModel = viewModel(
+    val viewModel: ShowNoteScreenViewModel = viewModel(
         factory = ShowNotesScreenViewModelFactory(
             NoteDatabaseProvider.getDatabase(LocalContext.current).notesDao()
         )
     )
-    val notesItem by viewModel.taskList.collectAsState(listOf())
+    val notesItem by viewModel.noteList.collectAsState(listOf())
 
     Scaffold(floatingActionButton = {
         FloatingActionButton({
@@ -78,7 +75,7 @@ fun ShowNotesRoot(modifier: Modifier = Modifier, openAddNoteScreen: (Long?) -> U
             )
         }
     }) { innerPadding ->
-        ShowTasks(
+        ShowNotes(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding),
@@ -154,16 +151,14 @@ fun NoteContent(
         ) {
 
             Box(
-                modifier = Modifier.widthIn(70.dp).fillMaxHeight(),
+                modifier = Modifier
+                    .widthIn(70.dp)
+                    .fillMaxHeight(),
                 contentAlignment = Alignment.Center
             ) {
                 val icon = getIconFromNoteType(newNote.type)
                 icon?.let {
-                    Icon(
-                        modifier = Modifier.size(24.dp),
-                        painter = painterResource(it),
-                        contentDescription = null
-                    )
+                    NotesItemIconImage(icon = it)
                 }
 
             }
@@ -182,34 +177,16 @@ fun NoteContent(
                             .horizontalScroll(rememberScrollState()),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        newNote.hashTags.forEach {
-                            AssistChip(
-                                modifier = Modifier
-                                    .padding(4.dp),
-                                border = AssistChipDefaults.assistChipBorder(
-                                    enabled = true,
-                                    borderColor = Color(0XFF889AAA),
-                                    disabledBorderColor = Color(0XFF889AAA),
-                                    borderWidth = 1.dp
-                                ),
-                                colors = AssistChipDefaults.assistChipColors(
-                                    labelColor = Color(
-                                        0XFF889AAA
-                                    )
-                                ),
-                                onClick = { },
-                                label = {
-                                    Text(text = it)
-                                })
+                        newNote.hashTags.forEach { chipText ->
+                            AssistChipNoteItem(chipText)
                         }
-
 
                     }
 
 
                 }
 
-                NoteItemType.COMMENT, NoteItemType.TITLE -> {
+                NoteItemType.DESCRIPTION, NoteItemType.TITLE -> {
                     Text(
                         newNote.noteText,
                         maxLines = if (note.expanded) {
@@ -220,16 +197,24 @@ fun NoteContent(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
+
+                NoteItemType.COMMENT -> {
+                }
+
+                NoteItemType.ATTACHMENT -> {
+                    newNote.noteAttachments.fastForEachIndexed { i, noteAttachment ->
+                        NotesAttachmentImage(path = noteAttachment.uri)
+                    }
+                }
             }
         }
         HorizontalDivider(color = LightGrayBlue)
-
     }
 
 }
 
 @Composable
-fun ShowTasks(
+fun ShowNotes(
     modifier: Modifier = Modifier,
     listOfNote: List<Note>,
     onAction: (NotesScreenAction) -> Unit,
@@ -257,9 +242,9 @@ fun ShowTasks(
 @Preview(showSystemUi = true)
 @Composable
 fun ShowNotesPreview() {
-    var listOfNotes = listOf(Note(0, getItemList()), Note(1, getItemList()), Note(2, getItemList()))
+    val listOfNotes = listOf(Note(0, getItemListPreview()), Note(1, getItemListPreview()), Note(2, getItemListPreview()))
     Scaffold(modifier = Modifier) { paddingValues ->
-        ShowTasks(modifier = Modifier.padding(paddingValues), listOfNote = listOfNotes, onAction = {
+        ShowNotes(modifier = Modifier.padding(paddingValues), listOfNote = listOfNotes, onAction = {
 
         }, openAddNoteScreen = {})
 
