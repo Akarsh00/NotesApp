@@ -42,9 +42,7 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -69,6 +67,7 @@ import com.aki.notesapp.common.NotesAttachmentImage
 import com.aki.notesapp.common.NotesItemIconImage
 import com.aki.notesapp.common.createNoteItemList
 import com.aki.notesapp.common.getIconFromNoteType
+import com.aki.notesapp.common.insertImageIntoMediaStore
 import com.aki.notesapp.common.rememberNavResult
 import com.aki.notesapp.db.NoteDatabaseProvider
 import com.aki.notesapp.presentation.addnote.action.AddNotesScreenAction
@@ -102,18 +101,23 @@ fun AddNoteRoot(
 
 
     val addNoteState by viewModel.addNoteItemList.collectAsStateWithLifecycle()
-    var pickedAttachments by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    val context = LocalContext.current
 
     navController?.let {
         rememberNavResult<List<Uri>>(
             key = "picked_attachments", navController = it
-        ) {
-            pickedAttachments = it
-            val attachments = pickedAttachments.mapIndexed { index, path ->
+        ) { uriList ->
+            val savedUris = uriList.mapNotNull { uri ->
+                insertImageIntoMediaStore(context, uri) // This is a suspend function
+            }
+
+            val attachments = savedUris.map { savedUri ->
                 NoteAttachment(
-                    noteAttachment = NoteItemType.ATTACHMENT, uri = path.toString()
+                    noteAttachment = NoteItemType.ATTACHMENT,
+                    uri = savedUri.toString()
                 )
             }
+
             viewModel.onAction(AddNotesScreenAction.OnAddAttachments(attachments))
         }
     }
@@ -237,14 +241,16 @@ private fun AddNoteLazyColumn(
             otherOptions = notesItem.otherOptionList
         ) { otherOptions ->
             when (otherOptions.type) {
-                OtherOptionType.HASHTAGS ->{
+                OtherOptionType.HASHTAGS -> {
                     onAction(AddNotesScreenAction.OnAddPopupActions(otherOptions))
 
                 }
+
                 OtherOptionType.ATTACHMENT -> {
                     openAttachmentsScreen.invoke()
 
                 }
+
                 OtherOptionType.COMMENT -> {
 
                 }

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
@@ -50,13 +51,18 @@ import com.aki.notesapp.common.getIconFromNoteType
 import com.aki.notesapp.common.getItemListPreview
 import com.aki.notesapp.db.NoteDatabaseProvider
 import com.aki.notesapp.db.model.Note
+import com.aki.notesapp.db.model.NoteAttachment
 import com.aki.notesapp.db.model.NoteItemType
-import com.aki.notesapp.presentation.shownotes.action.NotesScreenAction
+import com.aki.notesapp.presentation.shownotes.action.NotesScreenNavigationAction
+import com.aki.notesapp.presentation.shownotes.action.NotesScreenViewModelAction
 import com.aki.notesapp.ui.theme.LightGrayBlue
 import com.aki.notesapp.ui.theme.SoftRed
 
 @Composable
-fun ShowNotesListScreen(modifier: Modifier = Modifier, openAddNoteScreen: (Long?) -> Unit) {
+fun ShowNotesListScreen(
+    modifier: Modifier = Modifier,
+    navigationAction: (NotesScreenNavigationAction) -> Unit
+) {
 
     val viewModel: ShowNoteScreenViewModel = viewModel(
         factory = ShowNotesScreenViewModelFactory(
@@ -67,7 +73,7 @@ fun ShowNotesListScreen(modifier: Modifier = Modifier, openAddNoteScreen: (Long?
 
     Scaffold(floatingActionButton = {
         FloatingActionButton({
-            openAddNoteScreen.invoke(null)
+            navigationAction(NotesScreenNavigationAction.NotesScreenToAddNote(noteId = null))
         }) {
             Icon(
                 imageVector = Icons.Default.Add,
@@ -81,7 +87,8 @@ fun ShowNotesListScreen(modifier: Modifier = Modifier, openAddNoteScreen: (Long?
                 .padding(innerPadding),
             listOfNote = notesItem,
             onAction = viewModel::onAction,
-            openAddNoteScreen = { openAddNoteScreen.invoke(it) })
+            navigationAction = navigationAction
+        )
     }
 
 }
@@ -91,7 +98,7 @@ fun ShowNotesListScreen(modifier: Modifier = Modifier, openAddNoteScreen: (Long?
 fun HeaderNote(
     modifier: Modifier = Modifier,
     note: Note,
-    onAction: (NotesScreenAction) -> Unit,
+    onAction: (NotesScreenViewModelAction) -> Unit,
 ) {
     Row(
         modifier = modifier
@@ -123,7 +130,7 @@ fun HeaderNote(
             modifier = Modifier
                 .padding(8.dp)
                 .clickable {
-                    onAction(NotesScreenAction.NotesScreenExpandCollapseClicked(noteId = note.id))
+                    onAction(NotesScreenViewModelAction.NotesScreenExpandCollapseClicked(noteId = note.id))
                 }
                 .align(alignment = Alignment.CenterVertically))
     }
@@ -133,7 +140,7 @@ fun HeaderNote(
 fun NoteContent(
     modifier: Modifier = Modifier,
     note: Note,
-    onAction: (NotesScreenAction) -> Unit,
+    onAction: (NotesScreenViewModelAction) -> Unit,
     openAddNoteScreen: (Long?) -> Unit
 ) {
 
@@ -202,9 +209,18 @@ fun NoteContent(
                 }
 
                 NoteItemType.ATTACHMENT -> {
-                    newNote.noteAttachments.fastForEachIndexed { i, noteAttachment ->
-                        NotesAttachmentImage(path = noteAttachment.uri)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        newNote.noteAttachments.forEach { item: NoteAttachment ->
+                            NotesAttachmentImage(path = item.uri)
+                        }
                     }
+
                 }
             }
         }
@@ -217,9 +233,8 @@ fun NoteContent(
 fun ShowNotes(
     modifier: Modifier = Modifier,
     listOfNote: List<Note>,
-    onAction: (NotesScreenAction) -> Unit,
-    openAddNoteScreen: (Long?) -> Unit
-
+    onAction: (NotesScreenViewModelAction) -> Unit,
+    navigationAction: (NotesScreenNavigationAction) -> Unit
 ) {
     LazyColumn(modifier = modifier) {
         items(listOfNote.reversed()) { note ->
@@ -228,7 +243,9 @@ fun ShowNotes(
             NoteContent(
                 note = note,
                 onAction = onAction,
-                openAddNoteScreen = { openAddNoteScreen.invoke(it) })
+                openAddNoteScreen = {
+                    navigationAction(NotesScreenNavigationAction.NotesScreenToAddNote(noteId = it))
+                })
             HorizontalDivider(color = Color(0xFFCAD1EB))
         }
         items(5) {
@@ -242,11 +259,17 @@ fun ShowNotes(
 @Preview(showSystemUi = true)
 @Composable
 fun ShowNotesPreview() {
-    val listOfNotes = listOf(Note(0, getItemListPreview()), Note(1, getItemListPreview()), Note(2, getItemListPreview()))
+    val listOfNotes = listOf(
+        Note(0, getItemListPreview()),
+        Note(1, getItemListPreview()),
+        Note(2, getItemListPreview())
+    )
     Scaffold(modifier = Modifier) { paddingValues ->
         ShowNotes(modifier = Modifier.padding(paddingValues), listOfNote = listOfNotes, onAction = {
 
-        }, openAddNoteScreen = {})
+        }, navigationAction = {
+
+        })
 
     }
 }

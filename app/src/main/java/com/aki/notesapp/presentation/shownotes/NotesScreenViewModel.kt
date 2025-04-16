@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.aki.notesapp.db.dao.NotesDao
 import com.aki.notesapp.db.model.Note
-import com.aki.notesapp.presentation.shownotes.action.NotesScreenAction
+import com.aki.notesapp.presentation.shownotes.action.NotesScreenViewModelAction
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -23,10 +23,10 @@ class ShowNoteScreenViewModel(private val taskDao: NotesDao) : ViewModel() {
         }
     }
 
-    fun onAction(action: NotesScreenAction) {
+    fun onAction(action: NotesScreenViewModelAction) {
         when (action) {
 
-            is NotesScreenAction.NotesScreenExpandCollapseClicked -> {
+            is NotesScreenViewModelAction.NotesScreenExpandCollapseClicked -> {
                 val updatedList = _noteList.value.map { note ->
                     if (note.id == action.noteId) {
                         val updated = note.copy(expanded = !note.expanded)

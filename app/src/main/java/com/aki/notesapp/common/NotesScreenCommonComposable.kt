@@ -29,9 +29,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 
 @Composable
 fun AssistChipNoteItem(modifier: Modifier = Modifier, text: String) {
@@ -57,8 +60,17 @@ fun AssistChipNoteItem(modifier: Modifier = Modifier, text: String) {
 
 @Composable
 fun NotesAttachmentImage(modifier: Modifier = Modifier, path: String) {
+    val context = LocalContext.current
+
+    val imageRequest = ImageRequest.Builder(context)
+        .data(path.toUri()) // handle content:// uri properly
+        .crossfade(true)
+        .build()
+
+    val painter = rememberAsyncImagePainter(model = imageRequest)
+
     Image(
-        painter = rememberAsyncImagePainter(path),
+        painter = painter,
         contentDescription = null,
         modifier = modifier
             .size(50.dp)
