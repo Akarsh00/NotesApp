@@ -77,6 +77,7 @@ import com.aki.notesapp.db.model.Note
 import com.aki.notesapp.db.model.NoteAttachment
 import com.aki.notesapp.presentation.addnote_hashtags.hashtags.AddMoreOptionBottomSheet
 import com.aki.notesapp.presentation.addnote_popup.popupnote.AddOtherOptionPopup
+import com.aki.notesapp.presentation.addnote_popup.popupnote.state.OtherOptionType
 import com.aki.notesapp.ui.theme.LightGrayBlue
 import com.aki.notesapp.ui.theme.SoftRed
 
@@ -151,7 +152,7 @@ private fun AddNoteFullScreen(
     }
     Scaffold(topBar = {
         HeaderToolbar(
-            title = "Add Note", arrowBack = Icons.Filled.ArrowBack, onBackPressed = onBackPressed
+            title = "Add Note", arrowBack = Icons.Filled.ArrowBack, onIconClicked = onBackPressed
         )
     }, bottomBar = {
         BottomBar(onAction = onAction)
@@ -212,7 +213,7 @@ private fun AddNoteLazyColumn(
                 .padding(innerPadding), userScrollEnabled = false
         ) {
             item {
-                AddNoteHeader(modifier = Modifier.heightIn(min = 50.dp, max = 500.dp))
+//                AddNoteHeader(modifier = Modifier.heightIn(min = 50.dp, max = 500.dp))
             }
             items(notesItem.note.listOfNoteItem) { noteRow ->
                 AddNote(
@@ -236,23 +237,17 @@ private fun AddNoteLazyColumn(
             otherOptions = notesItem.otherOptionList
         ) { otherOptions ->
             when (otherOptions.type) {
-                NoteItemType.EMPTY -> {
-
-                }
-
-                NoteItemType.DATE -> {}
-                NoteItemType.DESCRIPTION -> {}
-                NoteItemType.HASHTAG -> {
+                OtherOptionType.HASHTAGS ->{
                     onAction(AddNotesScreenAction.OnAddPopupActions(otherOptions))
-                }
 
-                NoteItemType.ATTACHMENT -> {
+                }
+                OtherOptionType.ATTACHMENT -> {
                     openAttachmentsScreen.invoke()
 
                 }
+                OtherOptionType.COMMENT -> {
 
-                NoteItemType.COMMENT -> {}
-                NoteItemType.TITLE -> {}
+                }
             }
 
         }

@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.aki.notesapp.common.getIconFromNoteType
+import com.aki.notesapp.common.iconFromAddNoteOtherOption
 import com.aki.notesapp.common.listOfPopupAddNotesAction
 import com.aki.notesapp.presentation.addnote_popup.popupnote.state.OtherOptionState
 import com.aki.notesapp.ui.theme.DarkRed
@@ -58,7 +58,7 @@ fun ShowOtherOptions(
                     .clickable {
                         onAction.invoke(item)
                     }) {
-                    getIconFromNoteType(item.type)?.let { icon ->
+                    iconFromAddNoteOtherOption(item.type)?.let { icon ->
                         Image(
                             painter = painterResource(icon),
                             modifier = Modifier

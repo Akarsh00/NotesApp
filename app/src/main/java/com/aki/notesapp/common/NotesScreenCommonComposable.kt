@@ -62,7 +62,6 @@ fun NotesAttachmentImage(modifier: Modifier = Modifier, path: String) {
         contentDescription = null,
         modifier = modifier
             .size(50.dp)
-            .clip(RoundedCornerShape(16.dp))
     )
 }
 
@@ -103,12 +102,12 @@ fun EmptyNoteViews(modifier: Modifier = Modifier) {
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun HeaderToolbar(
-    title: String, arrowBack: ImageVector, onBackPressed: () -> Unit
+    title: String, arrowBack: ImageVector, onIconClicked: () -> Unit
 ) {
     TopAppBar(
         title = { Text(title) },
         navigationIcon = {
-            IconButton(onClick = { onBackPressed() }) {
+            IconButton(onClick = { onIconClicked() }) {
                 Icon(
                     imageVector = arrowBack, contentDescription = "Back"
                 )

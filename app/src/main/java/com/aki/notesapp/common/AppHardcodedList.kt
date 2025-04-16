@@ -3,6 +3,7 @@ package com.aki.notesapp.common
 import com.aki.notesapp.db.model.NoteItem
 import com.aki.notesapp.db.model.NoteItemType
 import com.aki.notesapp.presentation.addnote_popup.popupnote.state.OtherOptionState
+import com.aki.notesapp.presentation.addnote_popup.popupnote.state.OtherOptionType
 import kotlin.random.Random
 
 
@@ -29,12 +30,12 @@ fun createNoteItemList(): MutableList<NoteItem> {
 
 fun listOfPopupAddNotesAction(): List<OtherOptionState> =
     listOf(
-        OtherOptionState(NoteItemType.HASHTAG, false),
-        OtherOptionState(NoteItemType.ATTACHMENT, false),
-        OtherOptionState(NoteItemType.COMMENT, false),
-        OtherOptionState(NoteItemType.HASHTAG, false),
-        OtherOptionState(NoteItemType.ATTACHMENT, false),
-        OtherOptionState(NoteItemType.COMMENT, false),
+        OtherOptionState(OtherOptionType.HASHTAGS, false),
+        OtherOptionState(OtherOptionType.ATTACHMENT, false),
+        OtherOptionState(OtherOptionType.COMMENT, false),
+        OtherOptionState(OtherOptionType.HASHTAGS, false),
+        OtherOptionState(OtherOptionType.ATTACHMENT, false),
+        OtherOptionState(OtherOptionType.COMMENT, false),
     )
 
 fun getItemListPreview(): MutableList<NoteItem> {
