@@ -1,7 +1,9 @@
 package com.aki.notesapp.presentation.addnote
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -16,121 +18,163 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.aki.notesapp.presentation.addnote.model.NoteItem
-import com.aki.notesapp.presentation.addnote.model.NoteItemType
+import androidx.compose.ui.util.fastForEachIndexed
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.aki.notesapp.db.model.NoteItem
+import com.aki.notesapp.db.model.NoteItemType
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import com.aki.notesapp.common.AssistChipNoteItem
+import com.aki.notesapp.common.EmptyNoteViews
+import com.aki.notesapp.common.HeaderToolbar
+import com.aki.notesapp.common.NotesAttachmentImage
+import com.aki.notesapp.common.NotesItemIconImage
+import com.aki.notesapp.common.createNoteItemList
+import com.aki.notesapp.common.getIconFromNoteType
+import com.aki.notesapp.common.insertImageIntoMediaStore
+import com.aki.notesapp.common.rememberNavResult
 import com.aki.notesapp.db.NoteDatabaseProvider
-import com.aki.notesapp.presentation.EmptyNoteViews
-import com.aki.notesapp.presentation.HeaderToolbar
-import com.aki.notesapp.presentation.addnote.model.AddNotesScreenAction
-import com.aki.notesapp.presentation.addnote.model.AddNotesState
-import com.aki.notesapp.presentation.addnote.model.Note
-import com.aki.notesapp.presentation.addnote.model.createNoteItemList
+import com.aki.notesapp.presentation.addnote.action.AddNotesScreenAction
+import com.aki.notesapp.presentation.addnote.state.AddNotesState
+import com.aki.notesapp.db.model.Note
+import com.aki.notesapp.db.model.NoteAttachment
+import com.aki.notesapp.presentation.addnote_hashtags.hashtags.AddMoreOptionBottomSheet
+import com.aki.notesapp.presentation.addnote_popup.popupnote.AddOtherOptionPopup
+import com.aki.notesapp.presentation.addnote_popup.popupnote.state.OtherOptionType
 import com.aki.notesapp.ui.theme.LightGrayBlue
 import com.aki.notesapp.ui.theme.SoftRed
 
 @Composable
 fun AddNoteRoot(
-    modifier: Modifier = Modifier, taskId: Int? = null, onBackPressed: () -> Unit
+    navController: NavHostController?,
+    noteId: Long? = null,
+    onBackPressed: () -> Unit,
+    openAttachmentsScreen: () -> Unit
+
 ) {
+
+
     val viewModel: AddNoteViewModel = viewModel(
         factory = AddNoteViewModelFactory(
             NoteDatabaseProvider.getDatabase(LocalContext.current).notesDao()
         )
     )
-    LaunchedEffect(taskId) {
-        taskId?.let { viewModel.loadTaskById(it) }
-    }
-    val addNoteState by remember {
-        viewModel.addNoteItemList
+    LaunchedEffect(noteId) {
+        noteId?.let { viewModel.loadNoteById(noteId) }
     }
 
 
+    val addNoteState by viewModel.addNoteItemList.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    navController?.let {
+        rememberNavResult<List<Uri>>(
+            key = "picked_attachments", navController = it
+        ) { uriList ->
+            val savedUris = uriList.mapNotNull { uri ->
+                insertImageIntoMediaStore(context, uri) // This is a suspend function
+            }
+
+            val attachments = savedUris.map { savedUri ->
+                NoteAttachment(
+                    noteAttachment = NoteItemType.ATTACHMENT,
+                    uri = savedUri.toString()
+                )
+            }
+
+            viewModel.onAction(AddNotesScreenAction.OnAddAttachments(attachments))
+        }
+    }
     AddNoteFullScreen(
-        addNoteState,
+        addNoteState = addNoteState,
         onAction = viewModel::onAction,
-        onBackPressed = onBackPressed
-    )
+        onBackPressed = onBackPressed,
+        openAttachmentsScreen = { openAttachmentsScreen.invoke() })
 
 }
 
 @Composable
 private fun AddNoteFullScreen(
+    modifier: Modifier = Modifier,
     addNoteState: AddNotesState,
     onAction: (AddNotesScreenAction) -> Unit,
-    onBackPressed: () -> Unit
+    onBackPressed: () -> Unit,
+    openAttachmentsScreen: () -> Unit
+
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(addNoteState.snackBarText) {
         if (addNoteState.snackBarText.isNotEmpty()) {
             onBackPressed.invoke()
             snackbarHostState.showSnackbar(addNoteState.snackBarText)
         }
     }
-    Scaffold(
-        topBar = {
-            HeaderToolbar(
-                title = "Add Task",
-                arrowBack = Icons.Filled.ArrowBack,
-                onBackPressed = onBackPressed
-            )
-        },
-        bottomBar = {
-            BottomBar(onAction = onAction)
 
-        },
-        floatingActionButton = {
-            AddMoreFABOption(onAction = onAction)
-        },
-        snackbarHost = {
-            SnackbarHost(snackbarHostState)
+    if (addNoteState.showBottomSheet) {
+        AddMoreOptionBottomSheet(addNoteState, onSave = {
+            onAction(AddNotesScreenAction.OnAddHashTags(it))
 
-        }) { innerPadding ->
-        AddNoteLazyColumn(notesItem = addNoteState.note, innerPadding, onAction = onAction)
+        }, onDismiss = {
+            onAction(AddNotesScreenAction.OnBottomSheetCloseAction)
+        })
+    }
+    Scaffold(topBar = {
+        HeaderToolbar(
+            title = "Add Note", arrowBack = Icons.Filled.ArrowBack, onIconClicked = onBackPressed
+        )
+    }, bottomBar = {
+        BottomBar(onAction = onAction)
+
+    }, floatingActionButton = {
+//        if (addNoteState.isFabIconVisible) {
+//            AddMoreFABOption(onAction = onAction)
+//        }
+    }, snackbarHost = {
+        SnackbarHost(snackbarHostState)
+
+    }) { innerPadding ->
+        AddNoteLazyColumn(
+            modifier = modifier,
+            notesItem = addNoteState,
+            innerPadding,
+            onAction = onAction,
+            openAttachmentsScreen = { openAttachmentsScreen.invoke() })
     }
 }
 
@@ -159,31 +203,62 @@ private fun AddMoreFABOption(onAction: (AddNotesScreenAction) -> Unit) {
 
 @Composable
 private fun AddNoteLazyColumn(
-    notesItem: Note, innerPadding: PaddingValues, onAction: (AddNotesScreenAction) -> Unit
+    modifier: Modifier = Modifier,
+    notesItem: AddNotesState,
+    innerPadding: PaddingValues,
+    onAction: (AddNotesScreenAction) -> Unit,
+    openAttachmentsScreen: () -> Unit
+
 ) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding), userScrollEnabled = false
-    ) {
-        item {
-            AddNoteHeader(modifier = Modifier.heightIn(min = 50.dp, max = 500.dp))
-        }
-        items(notesItem.lisOfNoteItem) { noteRow ->
-            AddNote(
-                noteRow, modifier = Modifier.heightIn(50.dp, max = 500.dp)
-            ) { action ->
-                onAction.invoke(
-                    action
-                )
+    Box(modifier = modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding), userScrollEnabled = false
+        ) {
+            item {
+//                AddNoteHeader(modifier = Modifier.heightIn(min = 50.dp, max = 500.dp))
+            }
+            items(notesItem.note.listOfNoteItem) { noteRow ->
+                AddNote(
+                    noteRow, modifier = Modifier.heightIn(50.dp, max = 500.dp)
+                ) { action ->
+                    onAction.invoke(
+                        action
+                    )
+                }
+
+            }
+            items(25) {
+                EmptyNoteViews()
             }
 
         }
-        items(10) {
-            EmptyNoteViews()
-        }
+        AddOtherOptionPopup(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 80.dp),
+            otherOptions = notesItem.otherOptionList
+        ) { otherOptions ->
+            when (otherOptions.type) {
+                OtherOptionType.HASHTAGS -> {
+                    onAction(AddNotesScreenAction.OnAddPopupActions(otherOptions))
 
+                }
+
+                OtherOptionType.ATTACHMENT -> {
+                    openAttachmentsScreen.invoke()
+
+                }
+
+                OtherOptionType.COMMENT -> {
+
+                }
+            }
+
+        }
     }
+
 }
 
 
@@ -250,7 +325,8 @@ fun AddNoteHeader(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .widthIn(70.dp)
                 .padding(4.dp)
-                .align(Alignment.CenterVertically)
+                .align(Alignment.CenterVertically),
+            textAlign = TextAlign.Center
         )
         VerticalDivider(
             color = SoftRed
@@ -273,56 +349,77 @@ fun AddNote(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
 
-
-        if (newNote.type == NoteItemType.EMPTY) {
-            Box(modifier = Modifier.widthIn(70.dp))
-            VerticalDivider(
-                color = SoftRed
-            )
-
-        } else if (newNote.type == NoteItemType.TITLE || newNote.type == NoteItemType.COMMENT) {
-
-            Box(modifier = Modifier.widthIn(70.dp), contentAlignment = Alignment.Center) {
-                Icon(imageVector = Icons.Default.AccountBox, contentDescription = null)
+        Box(
+            modifier = Modifier.widthIn(min = 70.dp, max = 70.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            val icon = getIconFromNoteType(newNote.type)
+            icon?.let {
+                NotesItemIconImage(icon = it)
             }
-            VerticalDivider(
-                color = SoftRed
-            )
-            Box(
-                modifier = Modifier, contentAlignment = Alignment.CenterStart
-            ) {
-                BasicTextField(
-                    value = newNote.noteText,
-                    onValueChange = { newText ->
-                        onAction(
-                            AddNotesScreenAction.OnNotesTextChange(
-                                newNote, newText
-                            )
-                        )
-                    },
-                    textStyle = TextStyle(fontSize = 18.sp, color = Color(0XFF556777)),
-                    modifier = Modifier
-                        .padding(vertical = 8.dp)
-                        .fillMaxWidth()
-                        .background(Color.Transparent),
-                )
 
-                if (newNote.noteText.isEmpty()) {
-                    Text(
-                        text = newNote.hint, fontSize = 16.sp, color = Color(0XFF889AAA)
+        }
+
+        VerticalDivider(
+            color = SoftRed
+        )
+
+        when (newNote.type) {
+            NoteItemType.EMPTY -> {}
+            NoteItemType.DATE -> {}
+            NoteItemType.HASHTAG -> {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    newNote.hashTags.forEach { chipText ->
+                        AssistChipNoteItem(chipText)
+                    }
+
+                }
+
+
+            }
+
+            NoteItemType.TITLE, NoteItemType.DESCRIPTION -> {
+
+                Box(
+                    modifier = Modifier, contentAlignment = Alignment.CenterStart
+                ) {
+                    BasicTextField(
+                        value = newNote.noteText,
+                        onValueChange = { newText ->
+                            onAction(
+                                AddNotesScreenAction.OnNotesTextChange(
+                                    newNote, newText
+                                )
+                            )
+                        },
+                        textStyle = TextStyle(fontSize = 18.sp, color = Color(0XFF556777)),
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                            .fillMaxWidth()
+                            .background(Color.Transparent),
                     )
+
+                    if (newNote.noteText.isEmpty()) {
+                        Text(
+                            text = newNote.hint, fontSize = 16.sp, color = Color(0XFF889AAA)
+                        )
+                    }
                 }
             }
 
-        } else if (newNote.type == NoteItemType.DATE) {
-            Box(modifier = Modifier.widthIn(70.dp), contentAlignment = Alignment.Center) {
-                Icon(imageVector = Icons.Default.DateRange, contentDescription = null)
+            NoteItemType.COMMENT -> {}
+            NoteItemType.ATTACHMENT -> {
+                newNote.noteAttachments.fastForEachIndexed { i, noteAttachment ->
+                    NotesAttachmentImage(path = noteAttachment.uri)
+                }
+
 
             }
-            VerticalDivider(
-                color = SoftRed
-            )
-
         }
     }
     HorizontalDivider(color = LightGrayBlue)
@@ -336,11 +433,11 @@ fun AddNote(
 fun AddNotePreview() {
 
     AddNoteFullScreen(
-        AddNotesState(
-            note = Note(lisOfNoteItem = createNoteItemList()),
+        addNoteState = AddNotesState(
+            note = Note(listOfNoteItem = createNoteItemList()),
             isLoading = false,
             isNewNoteAdded = false,
-        ), onAction = {}) {
+        ), onBackPressed = {}, onAction = {}) {
 
     }
 }

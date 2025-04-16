@@ -57,6 +57,8 @@ dependencies {
 
 // If using in Fragment or Activity (for `viewModels()` delegate)
     implementation ("androidx.fragment:fragment-ktx:1.6.2")
+    implementation("io.coil-kt:coil-compose:2.7.0")
+
 
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2") // or latest
     val room_version = "2.7.0"

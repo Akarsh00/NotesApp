@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.aki.notesapp.db.dao.NotesDao
 import com.aki.notesapp.db.dao.converter.NoteItemListConverter
-import com.aki.notesapp.presentation.addnote.model.Note
+import com.aki.notesapp.db.model.Note
 
 @Database(entities = [Note::class], version = 1)
 @TypeConverters(NoteItemListConverter::class)

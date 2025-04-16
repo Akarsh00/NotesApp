@@ -1,7 +1,7 @@
 package com.aki.notesapp.db.dao.converter
 
 import androidx.room.TypeConverter
-import com.aki.notesapp.presentation.addnote.model.NoteItem
+import com.aki.notesapp.db.model.NoteItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
