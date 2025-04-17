@@ -55,6 +55,7 @@ import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEachIndexed
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aki.notesapp.db.model.NoteItem
 import com.aki.notesapp.db.model.NoteItemType
@@ -90,11 +91,7 @@ fun AddNoteRoot(
 ) {
 
 
-    val viewModel: AddNoteViewModel = viewModel(
-        factory = AddNoteViewModelFactory(
-            NoteDatabaseProvider.getDatabase(LocalContext.current).notesDao()
-        )
-    )
+    val viewModel: AddNoteViewModel = hiltViewModel()
     LaunchedEffect(noteId) {
         noteId?.let { viewModel.loadNoteById(noteId) }
     }

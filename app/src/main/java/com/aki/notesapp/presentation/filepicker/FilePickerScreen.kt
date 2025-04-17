@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
@@ -51,7 +52,7 @@ fun FilePickerScreen(
     onActionNavigation: (FilePickerNavigationAction) -> Unit
 ) {
 
-    val viewmodel: FilePickerViewModel = viewModel()
+    val viewmodel: FilePickerViewModel = hiltViewModel()
     val filePickerState by viewmodel.listOfPickedUri.collectAsStateWithLifecycle()
 
     val pickFiles = rememberGenericFilePicker(

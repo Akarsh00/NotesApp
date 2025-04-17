@@ -42,6 +42,7 @@ import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEachIndexed
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aki.notesapp.common.AssistChipNoteItem
 import com.aki.notesapp.common.EmptyNoteViews
@@ -64,11 +65,12 @@ fun ShowNotesListScreen(
     navigationAction: (NotesScreenNavigationAction) -> Unit
 ) {
 
-    val viewModel: ShowNoteScreenViewModel = viewModel(
-        factory = ShowNotesScreenViewModelFactory(
-            NoteDatabaseProvider.getDatabase(LocalContext.current).notesDao()
-        )
-    )
+//    val viewModel: ShowNoteScreenViewModel = viewModel(
+//        factory = ShowNotesScreenViewModelFactory(
+//            NoteDatabaseProvider.getDatabase(LocalContext.current).notesDao()
+//        )
+//    )
+    val viewModel: ShowNoteScreenViewModel = hiltViewModel()
     val notesItem by viewModel.noteList.collectAsState(listOf())
 
     Scaffold(floatingActionButton = {

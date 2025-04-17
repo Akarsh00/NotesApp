@@ -1,7 +1,6 @@
 package com.aki.notesapp.presentation.addnote
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.aki.notesapp.common.createNoteItemList
 import com.aki.notesapp.db.dao.NotesDao
@@ -10,13 +9,16 @@ import com.aki.notesapp.presentation.addnote.state.AddNotesState
 import com.aki.notesapp.db.model.NoteItem
 import com.aki.notesapp.db.model.Note
 import com.aki.notesapp.db.model.NoteItemType
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class AddNoteViewModel(private val noteDao: NotesDao) : ViewModel() {
+@HiltViewModel
+class AddNoteViewModel @Inject constructor(private val noteDao: NotesDao) : ViewModel() {
 
 
     private val _addNoteItemList = MutableStateFlow(
@@ -143,15 +145,3 @@ class AddNoteViewModel(private val noteDao: NotesDao) : ViewModel() {
     }
 }
 
-
-class AddNoteViewModelFactory(
-    private val noteDao: NotesDao
-) : ViewModelProvider.Factory {
-
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(AddNoteViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST") return AddNoteViewModel(noteDao) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
-}
