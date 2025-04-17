@@ -6,11 +6,14 @@ import androidx.lifecycle.viewModelScope
 import com.aki.notesapp.db.dao.NotesDao
 import com.aki.notesapp.db.model.Note
 import com.aki.notesapp.presentation.shownotes.action.NotesScreenViewModelAction
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ShowNoteScreenViewModel(private val taskDao: NotesDao) : ViewModel() {
+@HiltViewModel
+class ShowNoteScreenViewModel @Inject constructor(private val taskDao: NotesDao) : ViewModel() {
 
     private val _noteList = MutableStateFlow<List<Note>>(emptyList())
     val noteList: StateFlow<List<Note>> = _noteList
@@ -42,17 +45,5 @@ class ShowNoteScreenViewModel(private val taskDao: NotesDao) : ViewModel() {
     }
 }
 
-class ShowNotesScreenViewModelFactory(
-    private val noteDao: NotesDao
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ShowNoteScreenViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return ShowNoteScreenViewModel(noteDao) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
-
-}
 
 

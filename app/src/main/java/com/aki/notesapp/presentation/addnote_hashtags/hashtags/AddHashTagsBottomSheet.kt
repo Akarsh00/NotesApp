@@ -32,6 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aki.notesapp.presentation.addnote.state.AddNotesState
@@ -44,7 +45,7 @@ fun AddMoreOptionBottomSheet(
     onDismiss: () -> Unit,
     onSave: (List<String>) -> Unit
 ) {
-    val viewModel: AddHashTagsViewModel = viewModel()
+    val viewModel: AddHashTagsViewModel = hiltViewModel()
     val hashtagsState by viewModel.addHashTagState.collectAsStateWithLifecycle()
     val showSheet = remember { state.showBottomSheet }
     MoreOptionBottomSheet(
