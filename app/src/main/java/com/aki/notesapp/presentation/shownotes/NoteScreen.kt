@@ -189,9 +189,7 @@ fun NoteContent(
                         newNote.hashTags.forEach { chipText ->
                             AssistChipNoteItem(chipText)
                         }
-
                     }
-
 
                 }
 

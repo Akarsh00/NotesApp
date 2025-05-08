@@ -55,10 +55,10 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     // ViewModel KTX
-    implementation( "androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+    implementation( libs.androidx.lifecycle.viewmodel.ktx)
 
 // If using in Fragment or Activity (for `viewModels()` delegate)
-    implementation ("androidx.fragment:fragment-ktx:1.6.2")
+    implementation (libs.androidx.fragment.ktx)
     implementation("io.coil-kt:coil-compose:2.7.0")
 
 
