@@ -1,19 +1,15 @@
 package com.aki.notesapp.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.aki.notesapp.common.insertImageIntoMediaStore
-import com.aki.notesapp.presentation.addnote.AddNoteRoot
-import com.aki.notesapp.presentation.filepicker.FilePickerScreen
-import com.aki.notesapp.presentation.filepicker.action.FilePickerNavigationAction
-import com.aki.notesapp.presentation.shownotes.ShowNotesListScreen
-import com.aki.notesapp.presentation.shownotes.action.NotesScreenNavigationAction
+import com.aki.notesapp.feature.add_notes.presentation.AddNoteRoot
+import com.aki.notesapp.feature.filepicker.FilePickerScreen
+import com.aki.notesapp.feature.filepicker.action.FilePickerNavigationAction
+import com.aki.notesapp.feature.show_notes.presentation.ShowNotesListScreen
+import com.aki.notesapp.feature.show_notes.presentation.action.NotesScreenNavigationAction
 
 
 @Composable
