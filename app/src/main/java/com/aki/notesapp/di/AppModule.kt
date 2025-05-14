@@ -2,8 +2,8 @@ package com.aki.notesapp.di
 
 import android.content.Context
 import androidx.room.Room
-import com.aki.notesapp.db.AppDatabase
-import com.aki.notesapp.db.dao.NotesDao
+import com.aki.notesapp.common.data.db.AppDatabase
+import com.aki.notesapp.common.data.db.dao.NotesDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,7 +19,8 @@ class AppModule {
     @Singleton
     @Provides
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase {
-        return Room.databaseBuilder(context = context, AppDatabase::class.java, "note_db").build()
+        return Room.databaseBuilder(context = context, AppDatabase::class.java, "note_db")
+            .fallbackToDestructiveMigration().build()
     }
 
     @Singleton
